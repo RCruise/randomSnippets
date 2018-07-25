@@ -1,0 +1,72 @@
+1.	Given a cluster of 100 servers, write automation to install your SSH key on all of them. Use a tool and approach of your choice.
+                                                              
+ANSWER 1
+
+
+STEP 1:
+First of all, create the keygen pub on the server you want to get access to the rest of the cluster 
+ssh-keygen -t rsa -f ~/.ssh/id_rsa
+<press ENTER>
+<press ENTER>
+
+Two keys will be generated: the "id_rsa" and "id_rsa.pub"
+
+We are more concerned about the public key which is the “id_rsa.pub”
+
+
+STEP 2: 
+Distribute your key (id_rsa.pub) to all the servers. Create a shell script like this. You can either use a file or array like what I did here to contain the 100 servers.
+
+
+ClusterServers="Server1 Server2 Server3 Server4 Server5 ... Server100"; export Servers
+
+for srv in $ClusterServers
+do
+  echo $srv
+  ### Connect to each server and 
+  ### make a backup for the old authorized_keys on each node. Always make a backup of what you are editing, especially sensitive files like authorized_keys. 
+
+  ssh -n -A -l [*userid]  $srv "cd ~/.ssh; cp -p authorized_keys. authorized_keys.backup" 
+
+  ###Copy the new id.rsa_pub to every node
+
+  scp -p ~/.ssh/rsa_pub.<serverName> <userid>@${srv}:~/.ssh
+  
+  ###Append the the rsa.pub of your server to the authorized_keys
+
+  cat rsa_pub.[*serverName] >> authorized_keys
+
+done
+
+
+That’s it.
+
+For a passwordless access, you can use the option “expect” while distributing your keys.
+
+Sample:
+#!/bin/bash
+ClusterServer="Server1 Server2…… Server100  "; export ClusterServer
+
+
+
+for srv in $ClusterServer
+do
+       /usr/bin/expect<<!
+       spawn scp /home/.ssh/id_rsa_[servername].pub [userid]@$srv:~/.ssh
+        expect {
+                assword: {send "[password] \r"; exp_continue}
+        }
+
+!
+
+       /usr/bin/expect<<!
+       spawn ssh -l [username] $srv "cat ~/.ssh/id_rsa_[servername].pub >> ~/.ssh/authorized_keys"
+        expect {
+                assword: {send "[password] \r"; exp_continue}
+        }
+!
+done
+
+
+***By sending the password on each node, it will prevent the user from entering the password for each of the 100 servers while inserting your id_rsa.pub to the authorized keys.
+
