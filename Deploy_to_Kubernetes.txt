@@ -1,0 +1,46 @@
+# I have no experience with Kubernetes but over the weekend I took interest in it so I took a crash course in 
+# Kubernetes 101, and read other sources of tutorials about Kubernetes including github and youtube and udemy.
+# After learning the basic things, I installed Virtual Box and UBUNTU OS on my laptop and installed Kubernetes, 
+# minikube and other prerequisites,so I can actually see it in action. 
+# Unfortunately, I am still having issues with the nested VMs that is supposed to create a Kubernetes cluster
+# I've been reading some blogs but no luck at this point. 
+# Anyway, granted it get started, This is how I will deploy on a test Kubernetes cluster
+
+
+# I used kvm2 as the virtual machine for the cluster (tried both virtual box and kvm2)
+$  minikube start --vm-driver kvm2
+
+
+# assuming I have already created a container "weather-forecast"  
+# Deploy it
+$ kubectl run weather-forecast --image=weather-forecast:v1 --port=8080
+$ kubectl expose deployment weather-forecast
+
+
+# check the deployment
+$ kubectl get deployments
+
+# check whether the pod is up and running
+$ kubectl get pod
+# Expected output
+NAME                              READY     STATUS    RESTARTS   AGE
+weather-forecast-3383150820-vctvh      1/1      Running   0          2s
+
+# Once it is up and running, we can now use Curl to access it.
+#Expected output:
+NAME                              READY     STATUS    RESTARTS   AGE
+weather-forecast-3383150820-vctvh        1/1      Running   0          12s
+$ curl $(minikube service weather-forecast --url)
+
+
+
+# Once done
+$ kubectl delete services weather-forecast
+
+# delete the pod
+$ kubectl delete deployment weather-forecast
+
+# Stop the Cluster
+$ minikube stop
+
+
